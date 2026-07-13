@@ -533,6 +533,7 @@ body[data-print="true"] .slide-index, body[data-print="true"] #speaker-view { di
   var bc = ('BroadcastChannel' in window) ? new BroadcastChannel('seminar_v5') : null;
   var speakerWin = null;
   var current = idxFromHash();
+  var lastNavReqId = null;
 
   function applyTheme(i){ document.body.dataset.theme = slides[i].dataset.theme; }
 
@@ -612,16 +613,16 @@ body[data-print="true"] .slide-index, body[data-print="true"] #speaker-view { di
     });
     requestSync(); setTimeout(requestSync, 300); setTimeout(requestSync, 1000);
     if (bc) { bc.onmessage = function(ev){ if (ev.data && ev.data.type === 'nav') { curIdx = ev.data.index; renderSpeaker(curIdx); } }; }
+    var spSession = String(Date.now()) + '-' + Math.random().toString(36).slice(2);
+    var spSeq = 0;
+    function sendNavRequest(delta){
+      var msg = { type: 'nav-request', delta: delta, mid: spSession + ':' + (++spSeq) };
+      if (window.opener) { try { window.opener.postMessage(msg, '*'); } catch (e2) {} }
+      if (bc) bc.postMessage(msg);
+    }
     window.addEventListener('keydown', function(e){
-      if (['ArrowRight', 'PageDown', ' '].indexOf(e.key) !== -1) {
-        e.preventDefault();
-        if (window.opener) { try { window.opener.postMessage({ type: 'nav-request', delta: 1 }, '*'); } catch (e2) {} }
-        if (bc) bc.postMessage({ type: 'nav-request', delta: 1 });
-      } else if (['ArrowLeft', 'PageUp'].indexOf(e.key) !== -1) {
-        e.preventDefault();
-        if (window.opener) { try { window.opener.postMessage({ type: 'nav-request', delta: -1 }, '*'); } catch (e2) {} }
-        if (bc) bc.postMessage({ type: 'nav-request', delta: -1 });
-      }
+      if (['ArrowRight', 'PageDown', ' '].indexOf(e.key) !== -1) { e.preventDefault(); sendNavRequest(1); }
+      else if (['ArrowLeft', 'PageUp'].indexOf(e.key) !== -1) { e.preventDefault(); sendNavRequest(-1); }
     });
     return;
   }
@@ -652,15 +653,17 @@ body[data-print="true"] .slide-index, body[data-print="true"] #speaker-view { di
     paint(current + 1);
   });
 
+  function handleNavRequest(d){
+    if (d.mid != null) { if (d.mid === lastNavReqId) return; lastNavReqId = d.mid; }
+    if (typeof d.delta === 'number') paint(current + d.delta);
+    else if (typeof d.index === 'number') paint(d.index);
+  }
   window.addEventListener('message', function(ev){
     if (!ev.data || typeof ev.data !== 'object') return;
     if (ev.data.type === 'speaker-ready') { if (ev.source) speakerWin = ev.source; sendNavToSpeaker(); }
-    else if (ev.data.type === 'nav-request') {
-      if (typeof ev.data.delta === 'number') paint(current + ev.data.delta);
-      else if (typeof ev.data.index === 'number') paint(ev.data.index);
-    }
+    else if (ev.data.type === 'nav-request') { handleNavRequest(ev.data); }
   });
-  if (bc) { bc.onmessage = function(ev){ if (ev.data && ev.data.type === 'nav-request') { if (typeof ev.data.delta === 'number') paint(current + ev.data.delta); else if (typeof ev.data.index === 'number') paint(ev.data.index); } }; }
+  if (bc) { bc.onmessage = function(ev){ if (ev.data && ev.data.type === 'nav-request') handleNavRequest(ev.data); }; }
 
   paint(current, { viaHash: true });
 })();
