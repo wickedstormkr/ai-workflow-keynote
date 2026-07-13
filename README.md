@@ -1,9 +1,8 @@
 # AI Workflow Keynote
 
-**질문받는 AI에서, 일하는 AI로** — 사내 AX 교육 세미나 (Grok Build 기반).
+두 개의 발표 자료를 호스팅합니다.
 
-라이브: https://wickedstormkr.github.io/ai-workflow-keynote/
+- **기존 키노트** — https://wickedstormkr.github.io/ai-workflow-keynote/
+- **AX 세미나 v6** (질문받는 AI→일하는 AI · Grok Build · 데모 영상 포함) — https://wickedstormkr.github.io/ai-workflow-keynote/seminar/
 
-- 이동: 키보드 `←` `→`
-- 발표자 뷰: URL 뒤에 `?speaker`
-- 인쇄/PDF: URL 뒤에 `?print-pdf`
+조작: 키보드 `←` `→` 이동 · `?speaker` 발표자 뷰 · `?print-pdf` 인쇄/PDF
